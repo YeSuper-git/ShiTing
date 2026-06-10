@@ -1,6 +1,15 @@
+import { useState } from 'react';
 import './styles/global.css';
+import { AddModal } from './components/AddModal';
 
 function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAdd = (type: string, data: any) => {
+    console.log('添加记录:', type, data);
+    // TODO: 调用 API 添加记录
+  };
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -51,7 +60,7 @@ function App() {
           <div className="toolbar-center">仪表盘</div>
           <div className="toolbar-right">
             <input type="text" className="search-box" placeholder="搜索" />
-            <button className="btn btn-primary">+ 添加</button>
+            <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>+ 添加</button>
           </div>
         </header>
 
@@ -83,7 +92,7 @@ function App() {
               </div>
               <span className="section-link">显示全部 →</span>
             </div>
-            <div className="empty-state">暂无记录</div>
+            <div className="empty-state">暂无记录，点击右上角「+ 添加」开始</div>
           </div>
 
           <div className="section">
@@ -120,6 +129,12 @@ function App() {
           </div>
         </div>
       </main>
+
+      <AddModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAdd={handleAdd}
+      />
     </div>
   );
 }
