@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时停</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      /* macOS 系统颜色 */
+      -apple-system-text: rgba(0, 0, 0, 0.85);
+      -apple-system-secondary: rgba(0, 0, 0, 0.5);
+      -apple-system-tertiary: rgba(0, 0, 0, 0.25);
+      -apple-system-quaternary: rgba(0, 0, 0, 0.1);
+      -apple-system-fill: rgba(120, 120, 128, 0.2);
+      -apple-system-fill-secondary: rgba(120, 120, 128, 0.16);
+      
+      --separator: rgba(0, 0, 0, 0.1);
+      --grid: rgba(0, 0, 0, 0.04);
+      
+      /* 系统蓝色 */
+      --system-blue: #007AFF;
+      --system-green: #34C759;
+      --system-orange: #FF9500;
+      --system-red: #FF3B30;
+      --system-purple: #AF52DE;
+      --system-pink: #FF2D55;
+      --system-teal: #5AC8FA;
+      --system-indigo: #5856D6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      background: #F5F5F7;
+      color: -apple-system-text;
+      line-height: 1.47059;
+      letter-spacing: -0.022em;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    /* macOS 原生侧边栏 */
+    .sidebar {
+      width: 250px;
+      background: rgba(246, 246, 246, 0.92);
+      backdrop-filter: blur(50px) saturate(200%);
+      -webkit-backdrop-filter: blur(50px) saturate(200%);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-right: 0.5px solid rgba(0, 0, 0, 0.12);
+      position: relative;
+    }
+    
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: transparent;
+    }
+
+    .sidebar-header {
+      padding: 76px 16px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--system-blue), var(--system-indigo));
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 4px 8px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    .nav-section {
+      margin-bottom: 20px;
+    }
+    
+    .nav-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: -apple-system-secondary;
+      padding: 6px 10px 4px;
+      letter-spacing: 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: default;
+      color: -apple-system-text;
+      font-size: 13px;
+      font-weight: 400;
+      transition: background 0.1s ease;
+      min-height: 28px;
+    }
+    
+    .nav-item:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+    
+    .nav-item.active {
+      background: var(--system-blue);
+      color: white;
+    }
+    
+    .nav-item.active .nav-count {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+    
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    
+    .nav-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .nav-count {
+      font-size: 11px;
+      font-weight: 500;
+      color: -apple-system-secondary;
+      background: -apple-system-fill;
+      padding: 1px 6px;
+      border-radius: 4px;
+      min-width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer {
+      padding: 8px;
+      border-top: 0.5px solid var(--separator);
+    }
+    
+    .nav-item-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      color: -apple-system-secondary;
+      font-size: 13px;
+      cursor: default;
+      min-height: 28px;
+    }
+    
+    .nav-item-footer:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* 主内容区 */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #F5F5F7;
+    }
+
+    /* macOS 原生工具栏 */
+    .toolbar {
+      height: 52px;
+      background: rgba(246, 246, 246, 0.92);
+      backdrop-filter: blur(50px) saturate(200%);
+      -webkit-backdrop-filter: blur(50px) saturate(200%);
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      -webkit-app-region: drag;
+    }
+    
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .toolbar-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 13px;
+      font-weight: 600;
+      color: -apple-system-text;
+    }
+    
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      -webkit-app-region: no-drag;
+    }
+    
+    /* macOS 原生按钮 */
+    .toolbar-btn {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      background: linear-gradient(180deg, #FFFFFF 0%, #F0F0F0 100%);
+      color: -apple-system-text;
+      box-shadow: 
+        0 1px 1px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      transition: all 0.1s ease;
+    }
+    
+    .toolbar-btn:hover {
+      background: linear-gradient(180deg, #F8F8F8 0%, #E8E8E8 100%);
+    }
+    
+    .toolbar-btn:active {
+      background: linear-gradient(180deg, #E0E0E0 0%, #D0D0D0 100%);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .toolbar-btn-primary {
+      background: linear-gradient(180deg, #34AADC 0%, #007AFF 100%);
+      color: white;
+      border: 0.5px solid rgba(0, 0, 0, 0.15);
+      box-shadow: 
+        0 1px 2px rgba(0, 122, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .toolbar-btn-primary:hover {
+      background: linear-gradient(180deg, #2D9BC8 0%, #0062CC 100%);
+    }
+    
+    .toolbar-btn-primary:active {
+      background: linear-gradient(180deg, #005AB5 0%, #004BA0 100%);
+    }
+    
+    .toolbar-icon-btn {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    /* 搜索框 */
+    .search-box {
+      height: 28px;
+      width: 200px;
+      padding: 0 8px 0 28px;
+      border-radius: 6px;
+      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+      font-family: inherit;
+      color: -apple-system-text;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+      position: relative;
+    }
+    
+    .search-box::placeholder {
+      color: -apple-system-tertiary;
+    }
+    
+    .search-wrapper {
+      position: relative;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: -apple-system-tertiary;
+      pointer-events: none;
+    }
+
+    /* 内容区 */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+    
+    /* macOS 原生滚动条 */
+    .content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .content::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    
+    .content::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.25);
+      background-clip: content-box;
+    }
+
+    /* 汇总卡片 - macOS 风格 */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    
+    .summary-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      border: 0.5px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 0 0 0.5px rgba(0, 0, 0, 0.02);
+    }
+    
+    .summary-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: -apple-system-secondary;
+      margin-bottom: 4px;
+      letter-spacing: 0;
+    }
+    
+    .summary-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    
+    .summary-value.danger { color: var(--system-red); }
+    .summary-value.warning { color: var(--system-orange); }
+
+    /* 分组区块 - macOS grouped list 风格 */
+    .section {
+      margin-bottom: 28px;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+    
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .section-icon {
+      font-size: 16px;
+    }
+    
+    .btn-link {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--system-blue);
+      cursor: default;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    
+    .btn-link:hover {
+      background: rgba(0, 122, 255, 0.1);
+    }
+
+    /* 卡片容器 - macOS grouped list */
+    .cards-container {
+      background: white;
+      border-radius: 10px;
+      border: 0.5px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    /* 卡片行 - macOS list row */
+    .card-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: default;
+      transition: background 0.1s ease;
+      position: relative;
+      min-height: 64px;
+    }
+    
+    .card-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 52px;
+      right: 0;
+      height: 0.5px;
+      background: var(--separator);
+    }
+    
+    .card-row:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+    
+    .card-row:active {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    /* 卡片图标区域 */
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .card-icon.game { background: linear-gradient(135deg, #FF6B9D, #FF2D55); }
+    .card-icon.hardware { background: linear-gradient(135deg, #5AC8FA, #007AFF); }
+    .card-icon.consumable { background: linear-gradient(135deg, #4CD964, #34C759); }
+    .card-icon.medicine { background: linear-gradient(135deg, #FF9500, #FF3B30); }
+
+    /* 卡片内容 */
+    .card-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    
+    .card-name {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .card-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+    
+    .badge-expired {
+      background: rgba(255, 59, 48, 0.12);
+      color: var(--system-red);
+    }
+    
+    .badge-warning {
+      background: rgba(255, 149, 0, 0.12);
+      color: var(--system-orange);
+    }
+    
+    .badge-normal {
+      background: rgba(52, 199, 89, 0.12);
+      color: var(--system-green);
+    }
+    
+    .card-subtitle {
+      font-size: 11px;
+      color: -apple-system-secondary;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 右侧信息 */
+    .card-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+    
+    .card-countdown {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+    
+    .countdown-expired { color: var(--system-red); }
+    .countdown-warning { color: -apple-system-text; }
+    .countdown-normal { color: -apple-system-text; }
+    
+    .card-date {
+      font-size: 11px;
+      color: -apple-system-tertiary;
+      margin-top: 2px;
+    }
+    
+    .card-amount {
+      font-size: 11px;
+      color: -apple-system-secondary;
+      margin-top: 2px;
+    }
+    
+    .card-amount strong {
+      color: -apple-system-text;
+      font-weight: 600;
+    }
+
+    /* 展开箭头 */
+    .card-chevron {
+      color: -apple-system-tertiary;
+      font-size: 14px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    /* 空状态 */
+    .empty-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: -apple-system-tertiary;
+      font-size: 13px;
+      cursor: default;
+    }
+    
+    .empty-row:hover {
+      color: var(--system-blue);
+    }
+
+    /* 弹窗 - macOS sheet 风格 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 15vh;
+      z-index: 1000;
+      animation: fadeIn 0.15s ease;
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .modal {
+      background: #F5F5F7;
+      border-radius: 12px;
+      width: 420px;
+      max-height: 70vh;
+      overflow: hidden;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(0, 0, 0, 0.1);
+      animation: slideUp 0.2s ease;
+    }
+    
+    .modal-header {
+      padding: 16px 20px;
+      background: rgba(246, 246, 246, 0.92);
+      backdrop-filter: blur(50px);
+      -webkit-backdrop-filter: blur(50px);
+      border-bottom: 0.5px solid var(--separator);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: var(--system-fill);
+      cursor: default;
+      font-size: 10px;
+      color: -apple-system-secondary;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+    }
+    
+    .modal-close:hover {
+      background: var(--system-fill-secondary);
+    }
+    
+    .modal-close:active {
+      background: rgba(120, 120, 128, 0.3);
+    }
+    
+    .modal-body {
+      padding: 20px;
+    }
+    
+    .modal-desc {
+      font-size: 13px;
+      color: -apple-system-secondary;
+      margin-bottom: 16px;
+    }
+
+    /* 类型选择网格 */
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    
+    .type-card {
+      background: white;
+      border: 0.5px solid rgba(0, 0, 0, 0.08);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: default;
+      transition: all 0.1s ease;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    
+    .type-card:hover {
+      background: #FAFAFA;
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+    
+    .type-card:active {
+      background: #F0F0F0;
+      transform: scale(0.98);
+    }
+    
+    .type-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    
+    .type-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .type-desc {
+      font-size: 11px;
+      color: -apple-system-secondary;
+    }
+  </style>
+</head>
+<body>
+  <!-- macOS 原生侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">⏰</div>
+      <div class="sidebar-title">时停</div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">概览</div>
+        <div class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">仪表盘</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-label">分类</div>
+        <div class="nav-item">
+          <span class="nav-icon">🎮</span>
+          <span class="nav-text">游戏</span>
+          <span class="nav-count">8</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🔧</span>
+          <span class="nav-text">硬件质保</span>
+          <span class="nav-count">6</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">家用耗材</span>
+          <span class="nav-count">5</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">💊</span>
+          <span class="nav-text">药品</span>
+          <span class="nav-count">7</span>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="nav-item-footer">
+        <span>⚙️</span>
+        <span>设置</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+    <!-- macOS 原生工具栏 -->
+    <header class="toolbar">
+      <div class="toolbar-left">
+        <button class="toolbar-btn toolbar-icon-btn">◀</button>
+        <button class="toolbar-btn toolbar-icon-btn">▶</button>
+      </div>
+      <div class="toolbar-center">仪表盘</div>
+      <div class="toolbar-right">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-box" placeholder="搜索...">
+        </div>
+        <button class="toolbar-btn toolbar-btn-primary" onclick="openModal()">+ 添加记录</button>
+      </div>
+    </header>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <!-- 汇总卡片 -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">已过期</div>
+          <div class="summary-value danger">3</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">7天内到期</div>
+          <div class="summary-value warning">5</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">本月到期</div>
+          <div class="summary-value">12</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">总计记录</div>
+          <div class="summary-value">26</div>
+        </div>
+      </div>
+
+      <!-- 🎮 游戏 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🎮</span>
+            游戏
+          </div>
+          <span class="btn-link">显示全部</span>
+        </div>
+        <div class="cards-container">
+          <div class="card-row">
+            <div class="card-icon game">🎮</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">原神 · 月卡</span>
+                <span class="card-badge badge-expired">已过期</span>
+              </div>
+              <div class="card-subtitle">2026-05-07 → 2026-06-07</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-expired">3天前</span>
+              <span class="card-amount">消费 <strong>¥30</strong></span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon game">🎮</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">崩坏：星穹铁道 · 月卡</span>
+                <span class="card-badge badge-warning">即将到期</span>
+              </div>
+              <div class="card-subtitle">2026-05-12 → 2026-06-12</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-warning">2天</span>
+              <span class="card-amount">消费 <strong>¥30</strong></span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon game">🎮</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">王者荣耀 · 战令</span>
+                <span class="card-badge badge-warning">即将到期</span>
+              </div>
+              <div class="card-subtitle">2026-05-15 → 2026-06-15</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-warning">5天</span>
+              <span class="card-amount">消费 <strong>¥38</strong></span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon game">🎮</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">原神 · 大月卡</span>
+                <span class="card-badge badge-normal">正常</span>
+              </div>
+              <div class="card-subtitle">2026-06-08 → 2026-07-08</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-normal">28天</span>
+              <span class="card-amount">消费 <strong>¥68</strong></span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔧 硬件质保 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🔧</span>
+            硬件质保
+          </div>
+          <span class="btn-link">显示全部</span>
+        </div>
+        <div class="cards-container">
+          <div class="card-row">
+            <div class="card-icon hardware">💻</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">RTX 4070 Ti</span>
+                <span class="card-badge badge-warning">即将到期</span>
+              </div>
+              <div class="card-subtitle">华硕 · 显卡 · 京东</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-warning">45天</span>
+              <span class="card-date">质保剩余</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon hardware">🖥️</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">PG279QM</span>
+                <span class="card-badge badge-normal">正常</span>
+              </div>
+              <div class="card-subtitle">华硕 · 显示器</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-normal">186天</span>
+              <span class="card-date">质保剩余</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon hardware">💾</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">SN850X 2TB</span>
+                <span class="card-badge badge-normal">正常</span>
+              </div>
+              <div class="card-subtitle">西数 · 固态硬盘</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-normal">892天</span>
+              <span class="card-date">质保剩余</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🏠 家用耗材 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🏠</span>
+            家用耗材
+          </div>
+          <span class="btn-link">显示全部</span>
+        </div>
+        <div class="cards-container">
+          <div class="card-row">
+            <div class="card-icon consumable">🪣</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">净水器滤芯</span>
+                <span class="card-badge badge-expired">已过期</span>
+              </div>
+              <div class="card-subtitle">小米 · RO滤芯</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-expired">7天前</span>
+              <span class="card-date">建议更换</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon consumable">🧹</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">空气净化器滤芯</span>
+                <span class="card-badge badge-warning">即将到期</span>
+              </div>
+              <div class="card-subtitle">小米 · HEPA滤芯</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-warning">3天</span>
+              <span class="card-date">预计用完</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon consumable">🪥</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">扫地机边刷</span>
+                <span class="card-badge badge-normal">正常</span>
+              </div>
+              <div class="card-subtitle">石头 · 双边刷</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-normal">2个</span>
+              <span class="card-date">库存</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💊 药品 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">💊</span>
+            药品
+          </div>
+          <span class="btn-link">显示全部</span>
+        </div>
+        <div class="cards-container">
+          <div class="card-row">
+            <div class="card-icon medicine">💊</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">布洛芬缓释胶囊</span>
+                <span class="card-badge badge-expired">已过期</span>
+              </div>
+              <div class="card-subtitle">感冒发烧 · 0.3g×20粒</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-expired">12天前</span>
+              <span class="card-date">请勿使用</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon medicine">💊</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">感冒灵颗粒</span>
+                <span class="card-badge badge-warning">即将到期</span>
+              </div>
+              <div class="card-subtitle">感冒发烧 · 10g×9袋</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-warning">6天</span>
+              <span class="card-date">有效期剩余</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+          
+          <div class="card-row">
+            <div class="card-icon medicine">💊</div>
+            <div class="card-content">
+              <div class="card-title-row">
+                <span class="card-name">健胃消食片</span>
+                <span class="card-badge badge-normal">正常</span>
+              </div>
+              <div class="card-subtitle">肠胃消化 · 0.8g×32片</div>
+            </div>
+            <div class="card-right">
+              <span class="card-countdown countdown-normal">180天</span>
+              <span class="card-date">有效期剩余</span>
+            </div>
+            <span class="card-chevron">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 添加记录弹窗 - macOS Sheet 风格 -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">添加记录</span>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">选择要添加的记录类型</p>
+        <div class="type-grid">
+          <div class="type-card" onclick="selectType('game')">
+            <div class="type-icon">🎮</div>
+            <div class="type-name">游戏</div>
+            <div class="type-desc">月卡、通行证、会员</div>
+          </div>
+          <div class="type-card" onclick="selectType('hardware')">
+            <div class="type-icon">🔧</div>
+            <div class="type-name">硬件质保</div>
+            <div class="type-desc">电子产品、家电</div>
+          </div>
+          <div class="type-card" onclick="selectType('consumable')">
+            <div class="type-icon">🏠</div>
+            <div class="type-name">家用耗材</div>
+            <div class="type-desc">滤芯、电池、清洁用品</div>
+          </div>
+          <div class="type-card" onclick="selectType('medicine')">
+            <div class="type-icon">💊</div>
+            <div class="type-name">药品</div>
+            <div class="type-desc">家庭常备药</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('modal').classList.add('active');
+    }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+    function selectType(type) {
+      closeModal();
+      alert('跳转到 ' + type + ' 添加页面');
+    }
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

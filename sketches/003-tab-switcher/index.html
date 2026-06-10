@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时停 - 分类Tab切换</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #1a1a1a;
+      background: #fafafa;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header h1::before {
+      content: "⏱";
+      font-size: 24px;
+    }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-add {
+      background: #0066ff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-add:hover {
+      background: #0052cc;
+    }
+    .btn-add::before {
+      content: "+";
+      font-size: 18px;
+    }
+
+    /* Main Layout */
+    .main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: white;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+    .stat-chip:hover {
+      background: #f5f5f7;
+    }
+    .stat-chip.active {
+      border-color: #0066ff;
+      background: #f0f7ff;
+    }
+    .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .stat-dot.expired { background: #dc2626; }
+    .stat-dot.warning { background: #d97706; }
+    .stat-dot.normal { background: #059669; }
+    .stat-count {
+      font-weight: 600;
+    }
+
+    /* Category Tabs */
+    .category-tabs {
+      display: flex;
+      gap: 4px;
+      background: white;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .category-tab {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .category-tab:hover {
+      background: #f5f5f7;
+      color: #1a1a1a;
+    }
+    .category-tab.active {
+      background: #1a1a1a;
+      color: white;
+    }
+    .category-tab .tab-icon {
+      font-size: 18px;
+    }
+    .category-tab .tab-count {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    .category-tab.active .tab-count {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Content Panel */
+    .content-panel {
+      display: none;
+    }
+    .content-panel.active {
+      display: block;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .quick-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-btn:hover {
+      border-color: #999;
+    }
+    .quick-btn.active {
+      background: #f5f5f7;
+      border-color: #999;
+    }
+
+    /* List Table */
+    .list-table {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-header {
+      display: grid;
+      padding: 12px 20px;
+      background: #f8f8fa;
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 1px solid #eee;
+    }
+    .table-row {
+      display: grid;
+      padding: 16px 20px;
+      border-bottom: 1px solid #f5f5f5;
+      align-items: center;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .table-row:hover {
+      background: #fafafa;
+    }
+    .table-row:last-child {
+      border-bottom: none;
+    }
+
+    /* Game Layout */
+    .game-header {
+      grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+    }
+    .game-row {
+      grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+    }
+
+    /* Hardware Layout */
+    .hardware-header {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 100px;
+    }
+    .hardware-row {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 100px;
+    }
+
+    /* Consumable Layout */
+    .consumable-header {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 100px;
+    }
+    .consumable-row {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 100px;
+    }
+
+    /* Medicine Layout */
+    .medicine-header {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 100px;
+    }
+    .medicine-row {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 100px;
+    }
+
+    /* Cell */
+    .cell {
+      font-size: 14px;
+    }
+    .cell-primary {
+      font-weight: 500;
+    }
+    .cell-secondary {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .cell-status {
+      text-align: right;
+    }
+    .status-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    .status-expired {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .status-warning {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    .status-normal {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border-radius: 12px;
+    }
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .empty-state h3 {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #666;
+    }
+    .empty-state p {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 20px;
+    }
+    .empty-state .btn-add-empty {
+      background: #0066ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 480px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+      padding: 4px;
+    }
+    .modal-body {
+      padding: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #0066ff;
+    }
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+    .form-row .form-group {
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .btn-cancel {
+      background: #f5f5f7;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-submit {
+      background: #0066ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-submit:hover {
+      background: #0052cc;
+    }
+    .type-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .type-btn {
+      flex: 1;
+      padding: 12px;
+      background: #f5f5f7;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .type-btn:hover {
+      background: #e8e8ed;
+    }
+    .type-btn.active {
+      border-color: #0066ff;
+      background: #f0f7ff;
+    }
+    .type-btn .type-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    .type-btn .type-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Game Detail Expand */
+    .game-expand {
+      display: none;
+      padding: 12px 20px 12px 40px;
+      background: #f8f8fa;
+      border-bottom: 1px solid #eee;
+    }
+    .game-expand.show {
+      display: block;
+    }
+    .expand-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 13px;
+    }
+    .expand-item:not(:last-child) {
+      border-bottom: 1px solid #eee;
+    }
+    .expand-label {
+      color: #666;
+    }
+    .expand-value {
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <h1>时停</h1>
+    <div class="header-actions">
+      <button class="btn-add" onclick="openModal()">添加记录</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-chip active">
+        <span class="stat-dot expired"></span>
+        <span>已过期</span>
+        <span class="stat-count">3</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-dot warning"></span>
+        <span>即将到期</span>
+        <span class="stat-count">5</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-dot normal"></span>
+        <span>正常</span>
+        <span class="stat-count">24</span>
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+      <button class="category-tab active" data-category="game" onclick="switchCategory(this)">
+        <span class="tab-icon">🎮</span>
+        游戏
+        <span class="tab-count">8</span>
+      </button>
+      <button class="category-tab" data-category="hardware" onclick="switchCategory(this)">
+        <span class="tab-icon">🔧</span>
+        硬件质保
+        <span class="tab-count">6</span>
+      </button>
+      <button class="category-tab" data-category="consumable" onclick="switchCategory(this)">
+        <span class="tab-icon">🏠</span>
+        家用耗材
+        <span class="tab-count">10</span>
+      </button>
+      <button class="category-tab" data-category="medicine" onclick="switchCategory(this)">
+        <span class="tab-icon">💊</span>
+        药品管理
+        <span class="tab-count">8</span>
+      </button>
+    </div>
+
+    <!-- Game Panel -->
+    <div class="content-panel active" id="panel-game">
+      <div class="quick-actions">
+        <button class="quick-btn active">全部游戏</button>
+        <button class="quick-btn">有到期提醒</button>
+      </div>
+      <div class="list-table">
+        <div class="table-header game-header">
+          <div>游戏</div>
+          <div>最新月卡</div>
+          <div>消费金额</div>
+          <div>到期时间</div>
+          <div>状态</div>
+        </div>
+        <div class="table-row game-row" onclick="toggleExpand(this)">
+          <div class="cell">
+            <div class="cell-primary">原神</div>
+            <div class="cell-secondary">3 条记录</div>
+          </div>
+          <div class="cell">月卡</div>
+          <div class="cell">¥30</div>
+          <div class="cell">2026-06-13</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-warning">3天后</span>
+          </div>
+        </div>
+        <div class="game-expand">
+          <div class="expand-item">
+            <span class="expand-label">记录类型</span>
+            <span class="expand-value">月卡</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">购买日期</span>
+            <span class="expand-value">2026-05-13</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">生效日期</span>
+            <span class="expand-value">2026-05-13</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">到期日期</span>
+            <span class="expand-value">2026-06-13</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">消费金额</span>
+            <span class="expand-value">¥30</span>
+          </div>
+        </div>
+
+        <div class="table-row game-row" onclick="toggleExpand(this)">
+          <div class="cell">
+            <div class="cell-primary">崩坏：星穹铁道</div>
+            <div class="cell-secondary">2 条记录</div>
+          </div>
+          <div class="cell">大月卡</div>
+          <div class="cell">¥68</div>
+          <div class="cell">2026-06-20</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">10天后</span>
+          </div>
+        </div>
+        <div class="game-expand">
+          <div class="expand-item">
+            <span class="expand-label">记录类型</span>
+            <span class="expand-value">大月卡</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">购买日期</span>
+            <span class="expand-value">2026-05-20</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">消费金额</span>
+            <span class="expand-value">¥68</span>
+          </div>
+        </div>
+
+        <div class="table-row game-row" onclick="toggleExpand(this)">
+          <div class="cell">
+            <div class="cell-primary">王者荣耀</div>
+            <div class="cell-secondary">5 条记录</div>
+          </div>
+          <div class="cell">月卡</div>
+          <div class="cell">¥30</div>
+          <div class="cell">2026-06-08</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-expired">已过期</span>
+          </div>
+        </div>
+        <div class="game-expand">
+          <div class="expand-item">
+            <span class="expand-label">记录类型</span>
+            <span class="expand-value">月卡</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">购买日期</span>
+            <span class="expand-value">2026-05-08</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">到期日期</span>
+            <span class="expand-value">2026-06-08</span>
+          </div>
+          <div class="expand-item">
+            <span class="expand-label">消费金额</span>
+            <span class="expand-value">¥30</span>
+          </div>
+        </div>
+
+        <div class="table-row game-row">
+          <div class="cell">
+            <div class="cell-primary">永劫无间</div>
+            <div class="cell-secondary">1 条记录</div>
+          </div>
+          <div class="cell">通行证</div>
+          <div class="cell">¥98</div>
+          <div class="cell">2026-07-01</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">21天后</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hardware Panel -->
+    <div class="content-panel" id="panel-hardware">
+      <div class="quick-actions">
+        <button class="quick-btn active">全部硬件</button>
+        <button class="quick-btn">即将过保</button>
+      </div>
+      <div class="list-table">
+        <div class="table-header hardware-header">
+          <div>商品</div>
+          <div>品牌</div>
+          <div>购买渠道</div>
+          <div>购买价格</div>
+          <div>质保到期</div>
+          <div>状态</div>
+        </div>
+        <div class="table-row hardware-row">
+          <div class="cell">
+            <div class="cell-primary">RTX 4080 显卡</div>
+            <div class="cell-secondary">显卡</div>
+          </div>
+          <div class="cell">华硕</div>
+          <div class="cell">京东</div>
+          <div class="cell">¥5999</div>
+          <div class="cell">2026-07-15</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">35天后</span>
+          </div>
+        </div>
+        <div class="table-row hardware-row">
+          <div class="cell">
+            <div class="cell-primary">Dell U2723QE</div>
+            <div class="cell-secondary">显示器</div>
+          </div>
+          <div class="cell">Dell</div>
+          <div class="cell">京东</div>
+          <div class="cell">¥3999</div>
+          <div class="cell">2028-03-20</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">628天后</span>
+          </div>
+        </div>
+        <div class="table-row hardware-row">
+          <div class="cell">
+            <div class="cell-primary">Logitech MX Keys</div>
+            <div class="cell-secondary">键盘</div>
+          </div>
+          <div class="cell">罗技</div>
+          <div class="cell">京东</div>
+          <div class="cell">¥699</div>
+          <div class="cell">2026-06-05</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-expired">已过期</span>
+          </div>
+        </div>
+        <div class="table-row hardware-row">
+          <div class="cell">
+            <div class="cell-primary">Samsung 980 PRO</div>
+            <div class="cell-secondary">固态硬盘</div>
+          </div>
+          <div class="cell">三星</div>
+          <div class="cell">京东</div>
+          <div class="cell">¥899</div>
+          <div class="cell">2029-01-10</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">944天后</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consumable Panel -->
+    <div class="content-panel" id="panel-consumable">
+      <div class="quick-actions">
+        <button class="quick-btn active">全部耗材</button>
+        <button class="quick-btn">库存不足</button>
+      </div>
+      <div class="list-table">
+        <div class="table-header consumable-header">
+          <div>耗材</div>
+          <div>品牌</div>
+          <div>库存</div>
+          <div>可用时长</div>
+          <div>预计用完</div>
+          <div>状态</div>
+        </div>
+        <div class="table-row consumable-row">
+          <div class="cell">
+            <div class="cell-primary">净水器 RO 滤芯</div>
+            <div class="cell-secondary">净水滤芯</div>
+          </div>
+          <div class="cell">小米</div>
+          <div class="cell">1 个</div>
+          <div class="cell">90天/个</div>
+          <div class="cell">2026-06-15</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-warning">5天后</span>
+          </div>
+        </div>
+        <div class="table-row consumable-row">
+          <div class="cell">
+            <div class="cell-primary">空气净化器滤芯</div>
+            <div class="cell-secondary">空气滤芯</div>
+          </div>
+          <div class="cell">小米</div>
+          <div class="cell">2 个</div>
+          <div class="cell">180天/个</div>
+          <div class="cell">2026-06-25</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">15天后</span>
+          </div>
+        </div>
+        <div class="table-row consumable-row">
+          <div class="cell">
+            <div class="cell-primary">扫地机边刷</div>
+            <div class="cell-secondary">清洁配件</div>
+          </div>
+          <div class="cell">石头</div>
+          <div class="cell">3 个</div>
+          <div class="cell">60天/个</div>
+          <div class="cell">2026-08-10</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">库存充足</span>
+          </div>
+        </div>
+        <div class="table-row consumable-row">
+          <div class="cell">
+            <div class="cell-primary">洗碗机专用盐</div>
+            <div class="cell-secondary">清洁用品</div>
+          </div>
+          <div class="cell">Finish</div>
+          <div class="cell">0 个</div>
+          <div class="cell">-</div>
+          <div class="cell">-</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-expired">需购买</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medicine Panel -->
+    <div class="content-panel" id="panel-medicine">
+      <div class="quick-actions">
+        <button class="quick-btn active">全部药品</button>
+        <button class="quick-btn">感冒发烧</button>
+        <button class="quick-btn">肠胃消化</button>
+        <button class="quick-btn">外伤消毒</button>
+      </div>
+      <div class="list-table">
+        <div class="table-header medicine-header">
+          <div>药品</div>
+          <div>分类</div>
+          <div>规格</div>
+          <div>余量</div>
+          <div>有效期至</div>
+          <div>状态</div>
+        </div>
+        <div class="table-row medicine-row">
+          <div class="cell">
+            <div class="cell-primary">布洛芬缓释胶囊</div>
+            <div class="cell-secondary">口服，一次1粒，一日2次</div>
+          </div>
+          <div class="cell">感冒发烧</div>
+          <div class="cell">0.2g×24粒</div>
+          <div class="cell">18粒</div>
+          <div class="cell">2026-06-01</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-expired">已过期</span>
+          </div>
+        </div>
+        <div class="table-row medicine-row">
+          <div class="cell">
+            <div class="cell-primary">感冒灵颗粒</div>
+            <div class="cell-secondary">开水冲服，一次1袋，一日3次</div>
+          </div>
+          <div class="cell">感冒发烧</div>
+          <div class="cell">10g×9袋</div>
+          <div class="cell">5袋</div>
+          <div class="cell">2026-06-18</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-warning">8天后</span>
+          </div>
+        </div>
+        <div class="table-row medicine-row">
+          <div class="cell">
+            <div class="cell-primary">连花清瘟胶囊</div>
+            <div class="cell-secondary">口服，一次4粒，一日3次</div>
+          </div>
+          <div class="cell">感冒发烧</div>
+          <div class="cell">0.35g×48粒</div>
+          <div class="cell">24粒</div>
+          <div class="cell">2027-05-20</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">344天后</span>
+          </div>
+        </div>
+        <div class="table-row medicine-row">
+          <div class="cell">
+            <div class="cell-primary">蒙脱石散</div>
+            <div class="cell-secondary">口服，一次1袋，一日3次</div>
+          </div>
+          <div class="cell">肠胃消化</div>
+          <div class="cell">3g×10袋</div>
+          <div class="cell">8袋</div>
+          <div class="cell">2027-08-15</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">431天后</span>
+          </div>
+        </div>
+        <div class="table-row medicine-row">
+          <div class="cell">
+            <div class="cell-primary">碘伏消毒液</div>
+            <div class="cell-secondary">外用，涂抹患处</div>
+          </div>
+          <div class="cell">外伤消毒</div>
+          <div class="cell">100ml</div>
+          <div class="cell">半瓶</div>
+          <div class="cell">2026-12-01</div>
+          <div class="cell cell-status">
+            <span class="status-badge status-normal">174天后</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Modal -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>添加记录</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="type-selector">
+          <div class="type-btn active" data-type="game" onclick="selectType(this)">
+            <div class="type-icon">🎮</div>
+            <div class="type-name">游戏</div>
+          </div>
+          <div class="type-btn" data-type="hardware" onclick="selectType(this)">
+            <div class="type-icon">🔧</div>
+            <div class="type-name">硬件</div>
+          </div>
+          <div class="type-btn" data-type="consumable" onclick="selectType(this)">
+            <div class="type-icon">🏠</div>
+            <div class="type-name">耗材</div>
+          </div>
+          <div class="type-btn" data-type="medicine" onclick="selectType(this)">
+            <div class="type-icon">💊</div>
+            <div class="type-name">药品</div>
+          </div>
+        </div>
+
+        <div id="form-game">
+          <div class="form-group">
+            <label>游戏名称</label>
+            <input type="text" placeholder="例：原神">
+          </div>
+          <div class="form-group">
+            <label>记录类型</label>
+            <select>
+              <option>月卡</option>
+              <option>大月卡</option>
+              <option>通行证</option>
+              <option>会员</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>购买日期</label>
+              <input type="date">
+            </div>
+            <div class="form-group">
+              <label>消费金额</label>
+              <input type="number" placeholder="30">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>生效日期</label>
+              <input type="date">
+            </div>
+            <div class="form-group">
+              <label>到期日期</label>
+              <input type="date">
+            </div>
+          </div>
+        </div>
+
+        <div id="form-hardware" style="display:none">
+          <div class="form-group">
+            <label>商品名称</label>
+            <input type="text" placeholder="例：RTX 4080 显卡">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>品牌</label>
+              <input type="text" placeholder="例：华硕">
+            </div>
+            <div class="form-group">
+              <label>购买渠道</label>
+              <input type="text" placeholder="例：京东">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>购买日期</label>
+              <input type="date">
+            </div>
+            <div class="form-group">
+              <label>购买价格</label>
+              <input type="number" placeholder="5999">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>质保期限</label>
+              <input type="number" placeholder="3">
+            </div>
+            <div class="form-group">
+              <label>单位</label>
+              <select>
+                <option>年</option>
+                <option>月</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="form-consumable" style="display:none">
+          <div class="form-group">
+            <label>耗材名称</label>
+            <input type="text" placeholder="例：净水器 RO 滤芯">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>品牌/型号</label>
+              <input type="text" placeholder="例：小米">
+            </div>
+            <div class="form-group">
+              <label>库存数量</label>
+              <input type="number" placeholder="2">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>开始使用日期</label>
+              <input type="date">
+            </div>
+            <div class="form-group">
+              <label>单个可用天数</label>
+              <input type="number" placeholder="90">
+            </div>
+          </div>
+        </div>
+
+        <div id="form-medicine" style="display:none">
+          <div class="form-group">
+            <label>药品名称</label>
+            <input type="text" placeholder="例：布洛芬缓释胶囊">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>分类</label>
+              <select>
+                <option>感冒发烧</option>
+                <option>肠胃消化</option>
+                <option>外伤消毒</option>
+                <option>慢性病</option>
+                <option>维生素保健</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>规格</label>
+              <input type="text" placeholder="0.2g×24粒">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>有效期至</label>
+              <input type="date">
+            </div>
+            <div class="form-group">
+              <label>当前余量</label>
+              <input type="text" placeholder="18粒">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>用法用量</label>
+            <textarea rows="2" placeholder="口服，一次1粒，一日2次"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">取消</button>
+        <button class="btn-submit" onclick="closeModal()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(type) {
+      document.getElementById('addModal').classList.add('active');
+      if (type) {
+        selectTypeByValue(type);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('addModal').classList.remove('active');
+    }
+
+    function selectType(el) {
+      selectTypeByValue(el.dataset.type);
+    }
+
+    function selectTypeByValue(type) {
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+      document.getElementById('form-game').style.display = type === 'game' ? 'block' : 'none';
+      document.getElementById('form-hardware').style.display = type === 'hardware' ? 'block' : 'none';
+      document.getElementById('form-consumable').style.display = type === 'consumable' ? 'block' : 'none';
+      document.getElementById('form-medicine').style.display = type === 'medicine' ? 'block' : 'none';
+    }
+
+    function switchCategory(el) {
+      const category = el.dataset.category;
+      document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.category === category);
+      });
+      document.querySelectorAll('.content-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === `panel-${category}`);
+      });
+    }
+
+    function toggleExpand(row) {
+      const expand = row.nextElementSibling;
+      if (expand && expand.classList.contains('game-expand')) {
+        expand.classList.toggle('show');
+      }
+    }
+
+    document.getElementById('addModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Quick actions
+    document.querySelectorAll('.quick-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const parent = this.parentElement;
+        parent.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Stat chips
+    document.querySelectorAll('.stat-chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        document.querySelectorAll('.stat-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时停</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --bg-sidebar: #18181b;
+      --text-primary: #09090b;
+      --text-secondary: #71717a;
+      --text-muted: #a1a1aa;
+      --border: #e4e4e7;
+      --accent: #2563eb;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 左侧导航 */
+    .sidebar {
+      width: 240px;
+      background: var(--bg-sidebar);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sidebar-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 8px 12px;
+    }
+    .nav-section {
+      margin-bottom: 24px;
+    }
+    .nav-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #71717a;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #a1a1aa;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .nav-item.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 16px;
+    }
+    .nav-count {
+      margin-left: auto;
+      font-size: 12px;
+      background: rgba(255,255,255,0.1);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .nav-item-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: #71717a;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .nav-item-footer:hover { color: #fff; }
+
+    /* 主内容区 */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 顶部栏 */
+    .topbar {
+      height: 56px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      flex-shrink: 0;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .breadcrumb {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover {
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    /* 内容区 */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* 汇总卡片 */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .summary-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .summary-value {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .summary-value.danger { color: var(--danger); }
+    .summary-value.warning { color: var(--warning); }
+
+    /* 分组区块 */
+    .section {
+      margin-bottom: 40px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-icon {
+      font-size: 18px;
+    }
+    .btn-link {
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-link:hover {
+      color: var(--text-primary);
+    }
+
+    /* 卡片网格 */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    /* 卡片 */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .card:hover {
+      border-color: #d4d4d8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .card-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .card-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .badge-expired {
+      background: #fef2f2;
+      color: var(--danger);
+    }
+    .badge-warning {
+      background: #fffbeb;
+      color: var(--warning);
+    }
+    .badge-normal {
+      background: #f0fdf4;
+      color: var(--success);
+    }
+
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .card-countdown {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .countdown-expired { color: var(--danger); }
+    .countdown-warning { color: var(--text-primary); }
+    .countdown-normal { color: var(--text-primary); }
+
+    .card-date {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 游戏卡片 - 消费金额 */
+    .card-amount {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .card-amount strong {
+      color: var(--text-primary);
+    }
+
+    /* 弹窗 - 添加记录 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      width: 480px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover {
+      background: var(--bg);
+    }
+    .modal-body {
+      padding: 24px;
+    }
+
+    /* 类型选择 */
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .type-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .type-card:hover {
+      border-color: var(--accent);
+      background: #f8fafc;
+    }
+    .type-card.selected {
+      border-color: var(--accent);
+      background: #eff6ff;
+    }
+    .type-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .type-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .type-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 左侧导航 -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">⏰</div>
+      <div class="sidebar-title">时停</div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">概览</div>
+        <div class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span>仪表盘</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-label">分类</div>
+        <div class="nav-item" onclick="alert('跳转游戏列表')">
+          <span class="nav-icon">🎮</span>
+          <span>游戏</span>
+          <span class="nav-count">8</span>
+        </div>
+        <div class="nav-item" onclick="alert('跳转硬件列表')">
+          <span class="nav-icon">🔧</span>
+          <span>硬件质保</span>
+          <span class="nav-count">6</span>
+        </div>
+        <div class="nav-item" onclick="alert('跳转耗材列表')">
+          <span class="nav-icon">🏠</span>
+          <span>家用耗材</span>
+          <span class="nav-count">5</span>
+        </div>
+        <div class="nav-item" onclick="alert('跳转药品列表')">
+          <span class="nav-icon">💊</span>
+          <span>药品</span>
+          <span class="nav-count">7</span>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="nav-item-footer" onclick="alert('跳转设置')">
+        <span>⚙️</span>
+        <span>设置</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main class="main">
+    <!-- 顶部栏 -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="breadcrumb">仪表盘</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost">🔍 搜索</button>
+        <button class="btn btn-primary" onclick="openModal()">+ 添加记录</button>
+      </div>
+    </header>
+
+    <!-- 内容区 -->
+    <div class="content">
+      <!-- 汇总卡片 -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">已过期</div>
+          <div class="summary-value danger">3</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">7天内到期</div>
+          <div class="summary-value warning">5</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">本月到期</div>
+          <div class="summary-value">12</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">总计记录</div>
+          <div class="summary-value">26</div>
+        </div>
+      </div>
+
+      <!-- 🎮 游戏 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🎮</span>
+            游戏
+          </div>
+          <span class="btn-link">查看更多 →</span>
+        </div>
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">原神 · 月卡</span>
+              <span class="card-badge badge-expired">已过期</span>
+            </div>
+            <div class="card-meta">2026-05-07 → 2026-06-07</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-expired">3天前</div>
+                <div class="card-date">已过期</div>
+              </div>
+            </div>
+            <div class="card-amount">消费 <strong>¥30</strong></div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">崩坏：星穹铁道 · 月卡</span>
+              <span class="card-badge badge-warning">即将到期</span>
+            </div>
+            <div class="card-meta">2026-05-12 → 2026-06-12</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-warning">2天</div>
+                <div class="card-date">剩余</div>
+              </div>
+            </div>
+            <div class="card-amount">消费 <strong>¥30</strong></div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">王者荣耀 · 战令</span>
+              <span class="card-badge badge-warning">即将到期</span>
+            </div>
+            <div class="card-meta">2026-05-15 → 2026-06-15</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-warning">5天</div>
+                <div class="card-date">剩余</div>
+              </div>
+            </div>
+            <div class="card-amount">消费 <strong>¥38</strong></div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">原神 · 大月卡</span>
+              <span class="card-badge badge-normal">正常</span>
+            </div>
+            <div class="card-meta">2026-06-08 → 2026-07-08</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-normal">28天</div>
+                <div class="card-date">剩余</div>
+              </div>
+            </div>
+            <div class="card-amount">消费 <strong>¥68</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔧 硬件质保 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🔧</span>
+            硬件质保
+          </div>
+          <span class="btn-link">查看更多 →</span>
+        </div>
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">RTX 4070 Ti</span>
+              <span class="card-badge badge-warning">即将到期</span>
+            </div>
+            <div class="card-meta">华硕 · 显卡 · 京东</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-warning">45天</div>
+                <div class="card-date">质保剩余</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">PG279QM</span>
+              <span class="card-badge badge-normal">正常</span>
+            </div>
+            <div class="card-meta">华硕 · 显示器</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-normal">186天</div>
+                <div class="card-date">质保剩余</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">SN850X 2TB</span>
+              <span class="card-badge badge-normal">正常</span>
+            </div>
+            <div class="card-meta">西数 · 固态硬盘</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-normal">892天</div>
+                <div class="card-date">质保剩余</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🏠 家用耗材 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🏠</span>
+            家用耗材
+          </div>
+          <span class="btn-link">查看更多 →</span>
+        </div>
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">净水器滤芯</span>
+              <span class="card-badge badge-expired">已过期</span>
+            </div>
+            <div class="card-meta">小米 · RO滤芯</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-expired">7天前</div>
+                <div class="card-date">建议更换</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">空气净化器滤芯</span>
+              <span class="card-badge badge-warning">即将到期</span>
+            </div>
+            <div class="card-meta">小米 · HEPA滤芯</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-warning">3天</div>
+                <div class="card-date">预计用完</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">扫地机边刷</span>
+              <span class="card-badge badge-normal">正常</span>
+            </div>
+            <div class="card-meta">石头 · 双边刷</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-normal">2个</div>
+                <div class="card-date">库存</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💊 药品 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">💊</span>
+            药品
+          </div>
+          <span class="btn-link">查看更多 →</span>
+        </div>
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">布洛芬缓释胶囊</span>
+              <span class="card-badge badge-expired">已过期</span>
+            </div>
+            <div class="card-meta">感冒发烧 · 0.3g×20粒</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-expired">12天前</div>
+                <div class="card-date">请勿使用</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">感冒灵颗粒</span>
+              <span class="card-badge badge-warning">即将到期</span>
+            </div>
+            <div class="card-meta">感冒发烧 · 10g×9袋</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-warning">6天</div>
+                <div class="card-date">有效期剩余</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-top">
+              <span class="card-name">健胃消食片</span>
+              <span class="card-badge badge-normal">正常</span>
+            </div>
+            <div class="card-meta">肠胃消化 · 0.8g×32片</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-countdown countdown-normal">180天</div>
+                <div class="card-date">有效期剩余</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 添加记录弹窗 -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">添加记录</span>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">选择要添加的记录类型</p>
+        <div class="type-grid">
+          <div class="type-card" onclick="selectType('game')">
+            <div class="type-icon">🎮</div>
+            <div class="type-name">游戏</div>
+            <div class="type-desc">月卡、通行证、会员</div>
+          </div>
+          <div class="type-card" onclick="selectType('hardware')">
+            <div class="type-icon">🔧</div>
+            <div class="type-name">硬件质保</div>
+            <div class="type-desc">电子产品、家电</div>
+          </div>
+          <div class="type-card" onclick="selectType('consumable')">
+            <div class="type-icon">🏠</div>
+            <div class="type-name">家用耗材</div>
+            <div class="type-desc">滤芯、电池、清洁用品</div>
+          </div>
+          <div class="type-card" onclick="selectType('medicine')">
+            <div class="type-icon">💊</div>
+            <div class="type-name">药品</div>
+            <div class="type-desc">家庭常备药</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('modal').classList.add('active');
+    }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+    function selectType(type) {
+      closeModal();
+      alert('跳转到 ' + type + ' 添加页面');
+    }
+    // 点击遮罩关闭
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时停 - 分组列表首页</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #1a1a1a;
+      background: #f5f5f7;
+      line-height: 1.5;
+    }
+
+    /* 顶部导航 */
+    .header {
+      background: #fff;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-add {
+      background: #007AFF;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-add:hover { background: #0056CC; }
+
+    /* 主内容区 */
+    .main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* 分组区块 */
+    .section {
+      margin-bottom: 32px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-icon {
+      font-size: 24px;
+    }
+    .section-name {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .section-count {
+      color: #86868b;
+      font-size: 14px;
+    }
+    .btn-more {
+      color: #007AFF;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+    }
+    .btn-more:hover { text-decoration: underline; }
+
+    /* 卡片容器 - 横向滚动 */
+    .cards-container {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+    }
+    .cards-container::-webkit-scrollbar {
+      height: 6px;
+    }
+    .cards-container::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+
+    /* 卡片 */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      min-width: 200px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: all 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card-status {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .status-expired { background: #FF3B30; }
+    .status-warning { background: #FF9500; }
+    .status-normal { background: #34C759; }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      padding-right: 16px;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: #86868b;
+      margin-bottom: 12px;
+    }
+    .card-countdown {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .countdown-expired { color: #FF3B30; }
+    .countdown-warning { color: #FF9500; }
+    .countdown-normal { color: #1a1a1a; }
+
+    .card-countdown-label {
+      font-size: 12px;
+      color: #86868b;
+    }
+
+    /* 游戏卡片特殊 - 显示消费 */
+    .card-amount {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 13px;
+      color: #86868b;
+    }
+    .card-amount span {
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+
+    /* 空状态 */
+    .empty-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      min-width: 200px;
+      flex-shrink: 0;
+      border: 2px dashed #e5e5e5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+      color: #86868b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .empty-card:hover {
+      border-color: #007AFF;
+      color: #007AFF;
+    }
+    .empty-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .empty-text {
+      font-size: 13px;
+    }
+
+    /* 汇总栏 */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .summary-item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 20px;
+      flex: 1;
+      min-width: 120px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .summary-label {
+      font-size: 13px;
+      color: #86868b;
+      margin-bottom: 4px;
+    }
+    .summary-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .summary-value.warning { color: #FF9500; }
+    .summary-value.danger { color: #FF3B30; }
+  </style>
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <div class="header">
+    <h1>⏰ 时停</h1>
+    <div class="header-actions">
+      <button class="btn-add" onclick="alert('添加新记录')">
+        <span>+</span> 添加记录
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- 汇总栏 -->
+    <div class="summary-bar">
+      <div class="summary-item">
+        <div class="summary-label">已过期</div>
+        <div class="summary-value danger">3</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">7天内到期</div>
+        <div class="summary-value warning">5</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">本月到期</div>
+        <div class="summary-value">12</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">总计记录</div>
+        <div class="summary-value">48</div>
+      </div>
+    </div>
+
+    <!-- 🎮 游戏类 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🎮</span>
+          <span class="section-name">游戏</span>
+          <span class="section-count">8 条记录</span>
+        </div>
+        <a class="btn-more" href="javascript:alert('跳转游戏列表')">查看更多 →</a>
+      </div>
+      <div class="cards-container">
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-expired"></div>
+          <div class="card-title">原神</div>
+          <div class="card-subtitle">月卡</div>
+          <div class="card-countdown countdown-expired">已过期 3 天</div>
+          <div class="card-countdown-label">2026-06-07 到期</div>
+          <div class="card-amount">消费 <span>¥30</span></div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-warning"></div>
+          <div class="card-title">崩坏：星穹铁道</div>
+          <div class="card-subtitle">月卡</div>
+          <div class="card-countdown countdown-warning">剩余 2 天</div>
+          <div class="card-countdown-label">2026-06-12 到期</div>
+          <div class="card-amount">消费 <span>¥30</span></div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-warning"></div>
+          <div class="card-title">王者荣耀</div>
+          <div class="card-subtitle">战令</div>
+          <div class="card-countdown countdown-warning">剩余 5 天</div>
+          <div class="card-countdown-label">2026-06-15 到期</div>
+          <div class="card-amount">消费 <span>¥38</span></div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-normal"></div>
+          <div class="card-title">原神</div>
+          <div class="card-subtitle">大月卡</div>
+          <div class="card-countdown countdown-normal">剩余 28 天</div>
+          <div class="card-countdown-label">2026-07-08 到期</div>
+          <div class="card-amount">消费 <span>¥68</span></div>
+        </div>
+        <div class="empty-card" onclick="alert('添加游戏记录')">
+          <div class="empty-icon">+</div>
+          <div class="empty-text">添加游戏</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔧 硬件质保类 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🔧</span>
+          <span class="section-name">硬件质保</span>
+          <span class="section-count">6 条记录</span>
+        </div>
+        <a class="btn-more" href="javascript:alert('跳转硬件列表')">查看更多 →</a>
+      </div>
+      <div class="cards-container">
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-warning"></div>
+          <div class="card-title">RTX 4070 Ti</div>
+          <div class="card-subtitle">华硕 · 显卡</div>
+          <div class="card-countdown countdown-warning">剩余 45 天</div>
+          <div class="card-countdown-label">质保至 2026-07-25</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-normal"></div>
+          <div class="card-title">PG279QM</div>
+          <div class="card-subtitle">华硕 · 显示器</div>
+          <div class="card-countdown countdown-normal">剩余 186 天</div>
+          <div class="card-countdown-label">质保至 2026-12-13</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-normal"></div>
+          <div class="card-title">SN850X 2TB</div>
+          <div class="card-subtitle">西数 · 固态硬盘</div>
+          <div class="card-countdown countdown-normal">剩余 892 天</div>
+          <div class="card-countdown-label">质保至 2028-11-18</div>
+        </div>
+        <div class="empty-card" onclick="alert('添加硬件记录')">
+          <div class="empty-icon">+</div>
+          <div class="empty-text">添加硬件</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🏠 家用耗材类 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">🏠</span>
+          <span class="section-name">家用耗材</span>
+          <span class="section-count">5 条记录</span>
+        </div>
+        <a class="btn-more" href="javascript:alert('跳转耗材列表')">查看更多 →</a>
+      </div>
+      <div class="cards-container">
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-expired"></div>
+          <div class="card-title">净水器滤芯</div>
+          <div class="card-subtitle">小米 · RO滤芯</div>
+          <div class="card-countdown countdown-expired">已过期 7 天</div>
+          <div class="card-countdown-label">建议更换</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-warning"></div>
+          <div class="card-title">空气净化器滤芯</div>
+          <div class="card-subtitle">小米 · HEPA滤芯</div>
+          <div class="card-countdown countdown-warning">剩余 3 天</div>
+          <div class="card-countdown-label">预计 2026-06-13 用完</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-normal"></div>
+          <div class="card-title">扫地机边刷</div>
+          <div class="card-subtitle">石头 · 双边刷</div>
+          <div class="card-countdown countdown-normal">库存 2 个</div>
+          <div class="card-countdown-label">可用约 120 天</div>
+        </div>
+        <div class="empty-card" onclick="alert('添加耗材记录')">
+          <div class="empty-icon">+</div>
+          <div class="empty-text">添加耗材</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 💊 药品类 -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-icon">💊</span>
+          <span class="section-name">药品</span>
+          <span class="section-count">7 条记录</span>
+        </div>
+        <a class="btn-more" href="javascript:alert('跳转药品列表')">查看更多 →</a>
+      </div>
+      <div class="cards-container">
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-expired"></div>
+          <div class="card-title">布洛芬缓释胶囊</div>
+          <div class="card-subtitle">感冒发烧 · 0.3g×20粒</div>
+          <div class="card-countdown countdown-expired">已过期 12 天</div>
+          <div class="card-countdown-label">请勿使用</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-warning"></div>
+          <div class="card-title">感冒灵颗粒</div>
+          <div class="card-subtitle">感冒发烧 · 10g×9袋</div>
+          <div class="card-countdown countdown-warning">剩余 6 天</div>
+          <div class="card-countdown-label">有效期至 2026-06-16</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-normal"></div>
+          <div class="card-title">健胃消食片</div>
+          <div class="card-subtitle">肠胃消化 · 0.8g×32片</div>
+          <div class="card-countdown countdown-normal">剩余 180 天</div>
+          <div class="card-countdown-label">有效期至 2026-12-08</div>
+        </div>
+        <div class="card" onclick="alert('查看详情')">
+          <div class="card-status status-normal"></div>
+          <div class="card-title">创可贴</div>
+          <div class="card-subtitle">外伤消毒 · 100片</div>
+          <div class="card-countdown countdown-normal">余量 85 片</div>
+          <div class="card-countdown-label">有效期至 2028-03-15</div>
+        </div>
+        <div class="empty-card" onclick="alert('添加药品记录')">
+          <div class="empty-icon">+</div>
+          <div class="empty-text">添加药品</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 卡片点击交互已在 HTML 中内联
+  </script>
+</body>
+</html>

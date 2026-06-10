@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时停</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    /*
+     * macOS Native App Design System
+     * Based on Apple HIG + real macOS app conventions
+     * NOT Liquid Glass - this is standard macOS app UI
+     */
+    
+    :root {
+      /* System Colors - from macOS */
+      --system-text: #1d1d1f;
+      --system-text-secondary: rgba(0, 0, 0, 0.55);
+      --system-text-tertiary: rgba(0, 0, 0, 0.25);
+      --system-separator: rgba(0, 0, 0, 0.1);
+      
+      /* Accent */
+      --accent: #007AFF;
+      --accent-hover: #0056b3;
+      
+      /* Status */
+      --red: #FF3B30;
+      --orange: #FF9500;
+      --green: #34C759;
+      
+      /* Surface */
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --surface-hover: #f8f8f8;
+      --surface-active: #f0f0f0;
+      
+      /* Sidebar - macOS standard dark sidebar */
+      --sidebar-bg: rgba(0, 0, 0, 0.82);
+      --sidebar-text: rgba(255, 255, 255, 0.85);
+      --sidebar-text-secondary: rgba(255, 255, 255, 0.55);
+      --sidebar-hover: rgba(255, 255, 255, 0.1);
+      --sidebar-active: var(--accent);
+      
+      /* Toolbar */
+      --toolbar-bg: rgba(246, 246, 246, 0.92);
+      --toolbar-border: rgba(0, 0, 0, 0.12);
+      
+      /* Radius - macOS standard */
+      --radius: 6px;
+      --radius-lg: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 13px;
+      line-height: 1.4;
+      letter-spacing: -0.008em;
+      color: var(--system-text);
+      background: var(--bg);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* === SIDEBAR - macOS Standard === */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header {
+      padding: 18px 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-logo {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      padding: 0 8px;
+      overflow-y: auto;
+    }
+    
+    .nav-section {
+      margin-bottom: 20px;
+    }
+    
+    .nav-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--sidebar-text-secondary);
+      padding: 8px 10px 4px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: default;
+      color: var(--sidebar-text);
+      font-size: 13px;
+      font-weight: 400;
+      min-height: 26px;
+      transition: background 0.1s;
+    }
+    
+    .nav-item:hover {
+      background: var(--sidebar-hover);
+    }
+    
+    .nav-item.active {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .nav-icon {
+      width: 18px;
+      font-size: 14px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    .nav-text {
+      flex: 1;
+    }
+    
+    .nav-count {
+      font-size: 11px;
+      color: var(--sidebar-text-secondary);
+      min-width: 16px;
+      text-align: right;
+    }
+    
+    .nav-item.active .nav-count {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* === MAIN === */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* === TOOLBAR - macOS standard === */
+    .toolbar {
+      height: 52px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-bottom: 0.5px solid var(--toolbar-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      -webkit-app-region: drag;
+    }
+    
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+    
+    .toolbar-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--system-text);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    /* macOS Button */
+    .btn {
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+      color: var(--system-text);
+      box-shadow: 0 1px 1px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5);
+      transition: all 0.1s;
+    }
+    
+    .btn:hover {
+      background: linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%);
+    }
+    
+    .btn:active {
+      background: linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 100%);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(180deg, #34C759 0%, #30B350 100%);
+      color: white;
+      border-color: rgba(0,0,0,0.15);
+      box-shadow: 0 1px 2px rgba(52,199,89,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(180deg, #30B350 0%, #28A045 100%);
+    }
+    
+    /* macOS Search */
+    .search {
+      height: 28px;
+      width: 180px;
+      padding: 0 8px 0 24px;
+      border-radius: 5px;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.8);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--system-text);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+    }
+    
+    .search::placeholder {
+      color: var(--system-text-tertiary);
+    }
+    
+    .search-wrap {
+      position: relative;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--system-text-tertiary);
+    }
+
+    /* === CONTENT === */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    /* === STATS BAR === */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--system-separator);
+      margin-bottom: 20px;
+    }
+    
+    .stat {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    
+    .stat-value.red { color: var(--red); }
+    .stat-value.orange { color: var(--orange); }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--system-text-secondary);
+    }
+
+    /* === SECTION === */
+    .section {
+      margin-bottom: 24px;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+    
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--system-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .section-icon {
+      font-size: 14px;
+    }
+    
+    .section-link {
+      font-size: 12px;
+      color: var(--accent);
+      cursor: default;
+    }
+    
+    .section-link:hover {
+      text-decoration: underline;
+    }
+
+    /* === LIST - macOS grouped list === */
+    .list {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--system-separator);
+      overflow: hidden;
+    }
+    
+    .list-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      cursor: default;
+      transition: background 0.08s;
+      position: relative;
+      min-height: 52px;
+    }
+    
+    .list-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 48px;
+      right: 0;
+      height: 0.5px;
+      background: var(--system-separator);
+    }
+    
+    .list-row:hover {
+      background: var(--surface-hover);
+    }
+    
+    .list-row:active {
+      background: var(--surface-active);
+    }
+    
+    /* Icon */
+    .row-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    
+    .row-icon.game { background: #FF3B30; color: white; }
+    .row-icon.hw { background: #007AFF; color: white; }
+    .row-icon.home { background: #34C759; color: white; }
+    .row-icon.med { background: #FF9500; color: white; }
+    
+    /* Content */
+    .row-body {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .row-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .row-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    
+    .badge-red { background: rgba(255,59,48,0.15); color: var(--red); }
+    .badge-orange { background: rgba(255,149,0,0.15); color: var(--orange); }
+    .badge-green { background: rgba(52,199,89,0.15); color: var(--green); }
+    
+    .row-sub {
+      font-size: 11px;
+      color: var(--system-text-secondary);
+      margin-top: 1px;
+    }
+    
+    /* Right side */
+    .row-right {
+      text-align: right;
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+    
+    .row-countdown {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    
+    .row-countdown.red { color: var(--red); }
+    .row-countdown.orange { color: var(--system-text); }
+    .row-countdown.default { color: var(--system-text); }
+    
+    .row-meta {
+      font-size: 11px;
+      color: var(--system-text-tertiary);
+      margin-top: 1px;
+    }
+    
+    .row-amount {
+      font-size: 11px;
+      color: var(--system-text-secondary);
+      margin-top: 1px;
+    }
+    
+    .row-amount strong {
+      color: var(--system-text);
+      font-weight: 600;
+    }
+    
+    .row-chevron {
+      color: var(--system-text-tertiary);
+      font-size: 12px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    /* === MODAL - macOS sheet === */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20vh;
+      z-index: 100;
+    }
+    
+    .overlay.active {
+      display: flex;
+    }
+    
+    .sheet {
+      background: var(--bg);
+      border-radius: 12px;
+      width: 380px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .sheet-header {
+      padding: 14px 16px;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-bottom: 0.5px solid var(--system-separator);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .sheet-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .sheet-close {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.08);
+      cursor: default;
+      font-size: 10px;
+      color: var(--system-text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .sheet-close:hover {
+      background: rgba(0,0,0,0.12);
+    }
+    
+    .sheet-body {
+      padding: 16px;
+    }
+    
+    .sheet-desc {
+      font-size: 12px;
+      color: var(--system-text-secondary);
+      margin-bottom: 12px;
+    }
+
+    /* Type List */
+    .type-list {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 0.5px solid var(--system-separator);
+      overflow: hidden;
+    }
+    
+    .type-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: default;
+      transition: background 0.08s;
+      position: relative;
+    }
+    
+    .type-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 44px;
+      right: 0;
+      height: 0.5px;
+      background: var(--system-separator);
+    }
+    
+    .type-row:hover {
+      background: var(--surface-hover);
+    }
+    
+    .type-row:active {
+      background: var(--surface-active);
+    }
+    
+    .type-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    
+    .type-icon.game { background: #FF3B30; color: white; }
+    .type-icon.hw { background: #007AFF; color: white; }
+    .type-icon.home { background: #34C759; color: white; }
+    .type-icon.med { background: #FF9500; color: white; }
+    
+    .type-info {
+      flex: 1;
+    }
+    
+    .type-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .type-desc {
+      font-size: 11px;
+      color: var(--system-text-secondary);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">⏱</div>
+      <div class="sidebar-title">时停</div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">概览</div>
+        <div class="nav-item active">
+          <span class="nav-icon">◎</span>
+          <span class="nav-text">仪表盘</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-label">分类</div>
+        <div class="nav-item">
+          <span class="nav-icon">🎮</span>
+          <span class="nav-text">游戏</span>
+          <span class="nav-count">8</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">💻</span>
+          <span class="nav-text">硬件质保</span>
+          <span class="nav-count">6</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">家用耗材</span>
+          <span class="nav-count">5</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">💊</span>
+          <span class="nav-text">药品</span>
+          <span class="nav-count">7</span>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="toolbar">
+      <div class="toolbar-group">
+        <button class="btn">◀</button>
+        <button class="btn">▶</button>
+      </div>
+      <span class="toolbar-title">仪表盘</span>
+      <div class="toolbar-group">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search" placeholder="搜索">
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">+ 添加</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat">
+          <span class="stat-value red">3</span>
+          <span class="stat-label">已过期</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value orange">5</span>
+          <span class="stat-label">7天内</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">12</span>
+          <span class="stat-label">本月</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">26</span>
+          <span class="stat-label">总计</span>
+        </div>
+      </div>
+
+      <!-- 游戏 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🎮</span>
+            游戏
+          </div>
+          <span class="section-link">显示全部</span>
+        </div>
+        <div class="list">
+          <div class="list-row">
+            <div class="row-icon game">🎮</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">原神 · 月卡</span>
+                <span class="badge badge-red">已过期</span>
+              </div>
+              <div class="row-sub">2026-05-07 - 2026-06-07</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown red">3天前</div>
+              <div class="row-amount">消费 <strong>¥30</strong></div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon game">🎮</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">崩坏：星穹铁道 · 月卡</span>
+                <span class="badge badge-orange">即将到期</span>
+              </div>
+              <div class="row-sub">2026-05-12 - 2026-06-12</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown orange">2天</div>
+              <div class="row-amount">消费 <strong>¥30</strong></div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon game">🎮</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">王者荣耀 · 战令</span>
+                <span class="badge badge-orange">即将到期</span>
+              </div>
+              <div class="row-sub">2026-05-15 - 2026-06-15</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown orange">5天</div>
+              <div class="row-amount">消费 <strong>¥38</strong></div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon game">🎮</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">原神 · 大月卡</span>
+                <span class="badge badge-green">正常</span>
+              </div>
+              <div class="row-sub">2026-06-08 - 2026-07-08</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown default">28天</div>
+              <div class="row-amount">消费 <strong>¥68</strong></div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 硬件质保 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">💻</span>
+            硬件质保
+          </div>
+          <span class="section-link">显示全部</span>
+        </div>
+        <div class="list">
+          <div class="list-row">
+            <div class="row-icon hw">💻</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">RTX 4070 Ti</span>
+                <span class="badge badge-orange">即将到期</span>
+              </div>
+              <div class="row-sub">华硕 · 显卡 · 京东</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown orange">45天</div>
+              <div class="row-meta">质保剩余</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon hw">🖥</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">PG279QM</span>
+                <span class="badge badge-green">正常</span>
+              </div>
+              <div class="row-sub">华硕 · 显示器</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown default">186天</div>
+              <div class="row-meta">质保剩余</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon hw">💾</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">SN850X 2TB</span>
+                <span class="badge badge-green">正常</span>
+              </div>
+              <div class="row-sub">西数 · 固态硬盘</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown default">892天</div>
+              <div class="row-meta">质保剩余</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 家用耗材 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">🏠</span>
+            家用耗材
+          </div>
+          <span class="section-link">显示全部</span>
+        </div>
+        <div class="list">
+          <div class="list-row">
+            <div class="row-icon home">🪣</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">净水器滤芯</span>
+                <span class="badge badge-red">已过期</span>
+              </div>
+              <div class="row-sub">小米 · RO滤芯</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown red">7天前</div>
+              <div class="row-meta">建议更换</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon home">🧹</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">空气净化器滤芯</span>
+                <span class="badge badge-orange">即将到期</span>
+              </div>
+              <div class="row-sub">小米 · HEPA滤芯</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown orange">3天</div>
+              <div class="row-meta">预计用完</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon home">🪥</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">扫地机边刷</span>
+                <span class="badge badge-green">正常</span>
+              </div>
+              <div class="row-sub">石头 · 双边刷</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown default">2个</div>
+              <div class="row-meta">库存</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 药品 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">💊</span>
+            药品
+          </div>
+          <span class="section-link">显示全部</span>
+        </div>
+        <div class="list">
+          <div class="list-row">
+            <div class="row-icon med">💊</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">布洛芬缓释胶囊</span>
+                <span class="badge badge-red">已过期</span>
+              </div>
+              <div class="row-sub">感冒发烧 · 0.3g×20粒</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown red">12天前</div>
+              <div class="row-meta">请勿使用</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon med">💊</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">感冒灵颗粒</span>
+                <span class="badge badge-orange">即将到期</span>
+              </div>
+              <div class="row-sub">感冒发烧 · 10g×9袋</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown orange">6天</div>
+              <div class="row-meta">有效期剩余</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+          
+          <div class="list-row">
+            <div class="row-icon med">💊</div>
+            <div class="row-body">
+              <div class="row-top">
+                <span class="row-name">健胃消食片</span>
+                <span class="badge badge-green">正常</span>
+              </div>
+              <div class="row-sub">肠胃消化 · 0.8g×32片</div>
+            </div>
+            <div class="row-right">
+              <div class="row-countdown default">180天</div>
+              <div class="row-meta">有效期剩余</div>
+            </div>
+            <span class="row-chevron">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="overlay" id="modal">
+    <div class="sheet">
+      <div class="sheet-header">
+        <span class="sheet-title">添加记录</span>
+        <button class="sheet-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="sheet-body">
+        <p class="sheet-desc">选择要添加的记录类型</p>
+        <div class="type-list">
+          <div class="type-row" onclick="selectType('game')">
+            <div class="type-icon game">🎮</div>
+            <div class="type-info">
+              <div class="type-name">游戏</div>
+              <div class="type-desc">月卡、通行证、会员</div>
+            </div>
+          </div>
+          <div class="type-row" onclick="selectType('hardware')">
+            <div class="type-icon hw">💻</div>
+            <div class="type-info">
+              <div class="type-name">硬件质保</div>
+              <div class="type-desc">电子产品、家电</div>
+            </div>
+          </div>
+          <div class="type-row" onclick="selectType('consumable')">
+            <div class="type-icon home">🏠</div>
+            <div class="type-info">
+              <div class="type-name">家用耗材</div>
+              <div class="type-desc">滤芯、电池、清洁用品</div>
+            </div>
+          </div>
+          <div class="type-row" onclick="selectType('medicine')">
+            <div class="type-icon med">💊</div>
+            <div class="type-info">
+              <div class="type-name">药品</div>
+              <div class="type-desc">家庭常备药</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('modal').classList.add('active');
+    }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+    function selectType(type) {
+      closeModal();
+      alert('跳转到 ' + type + ' 添加页面');
+    }
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

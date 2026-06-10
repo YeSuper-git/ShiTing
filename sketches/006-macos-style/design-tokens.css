@@ -1,0 +1,138 @@
+/*
+ * 时停 - Design Tokens
+ * 基于 macOS 26 原生应用风格
+ * 从 sketches/006-macos-style 提取
+ */
+
+:root {
+  /* ===== 颜色 ===== */
+  
+  /* 主色 */
+  --color-accent: #007AFF;
+  --color-accent-hover: #0056CC;
+  --color-accent-active: #0052B3;
+  --color-accent-light: rgba(0, 122, 255, 0.08);
+  
+  /* 状态色 */
+  --color-danger: #FF3B30;
+  --color-danger-light: rgba(255, 59, 48, 0.12);
+  --color-warning: #FF9500;
+  --color-warning-light: rgba(255, 149, 0, 0.12);
+  --color-success: #34C759;
+  --color-success-light: rgba(52, 199, 89, 0.12);
+  
+  /* 中性色 */
+  --color-bg: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-surface-alpha: rgba(255, 255, 255, 0.8);
+  --color-surface-hover: rgba(255, 255, 255, 0.95);
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-border-strong: rgba(0, 0, 0, 0.1);
+  
+  /* 文字 */
+  --color-text: #1d1d1f;
+  --color-text-secondary: #6e6e73;
+  --color-text-muted: #aeaeb2;
+  --color-text-white: #ffffff;
+  
+  /* 侧边栏 */
+  --color-sidebar-bg: rgba(30, 30, 30, 0.85);
+  --color-sidebar-text: rgba(255, 255, 255, 0.85);
+  --color-sidebar-text-muted: rgba(255, 255, 255, 0.55);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.1);
+  --color-sidebar-active: var(--color-accent);
+  
+  /* 遮罩 */
+  --color-overlay: rgba(0, 0, 0, 0.3);
+  
+  
+  /* ===== 字体 ===== */
+  
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+  
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 17px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 28px;
+  --font-size-4xl: 34px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.2;
+  --line-height-normal: 1.47;
+  
+  
+  /* ===== 间距 ===== */
+  
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  
+  
+  /* ===== 圆角 ===== */
+  
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+  
+  
+  /* ===== 阴影 ===== */
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
+  
+  
+  /* ===== 毛玻璃 ===== */
+  
+  --blur-sm: blur(8px);
+  --blur-md: blur(20px) saturate(180%);
+  --blur-lg: blur(40px) saturate(180%);
+  --blur-xl: blur(60px) saturate(200%);
+  
+  
+  /* ===== 动画 ===== */
+  
+  --duration-fast: 0.15s;
+  --duration-normal: 0.2s;
+  --duration-slow: 0.25s;
+  --duration-slower: 0.3s;
+  --ease-default: ease;
+  
+  
+  /* ===== 布局 ===== */
+  
+  --sidebar-width: 250px;
+  --toolbar-height: 56px;
+  --card-min-width: 240px;
+}
+
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0.01ms;
+    --duration-normal: 0.01ms;
+    --duration-slow: 0.01ms;
+    --duration-slower: 0.01ms;
+  }
+}
